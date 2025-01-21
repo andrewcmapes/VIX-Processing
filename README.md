@@ -1,4 +1,4 @@
-The following folders contain the following:
+The repository folders contain the following:
 
 The VIX Codes folder contain two different .py files. One is for processing data extracted from the CBOE website, the other is for analysing the data for gathering insight. 
 
