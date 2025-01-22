@@ -216,6 +216,9 @@ def Spreads(mo_spread=1, differential=True, save=True):
     return table
 
 
+import time
+then = time.time()
 
-
-
+time.sleep(2)
+now = time.time()
+print(now- then)
