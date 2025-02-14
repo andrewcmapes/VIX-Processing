@@ -7,49 +7,12 @@ from datetime import datetime
 import os
 from io import StringIO
 
+codes = 'FGHJKMNQUVXZ'
+months = "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+code_month = dict(zip(codes, months))
+month_number = dict(zip(months, range(1, 13)))
+number_code = dict(zip(range(1, 13), codes))
 
-code_month = {
-    "F": "Jan",
-    "G": "Feb",
-    "H": "Mar",
-    "J": "Apr",
-    "K": "May",
-    "M": "Jun",
-    "N": "Jul",
-    "Q": "Aug",
-    "U": "Sep",
-    "V": "Oct",
-    "X": "Nov",
-    "Z": "Dec"
-            }
-month_number = {
-    "Jan": "01",
-    "Feb": "02",
-    "Mar": "03",
-    "Apr": "04",
-    "May": "05",
-    "Jun": "06",
-    "Jul": "07",
-    "Aug": "08",
-    "Sep": "09",
-    "Oct": "10",
-    "Nov": "11",
-    "Dec": "12"
-            }
-number_code = {
-    "01": "F",
-    "02": "G",
-    "03": "H",
-    "04": "J",
-    "05": "K",
-    "06": "M",
-    "07": "N",
-    "08": "Q",
-    "09": "U",
-    "10": "V",
-    "11": "X",
-    "12": "Z"
-    }
 
 
 def Retriever(month: int, year: int, folder_out=r"C:\\Users\\andre\\spyder-env\\Projects\\VIX\\VIX Individual Data") -> None:
@@ -214,11 +177,3 @@ def Spreads(mo_spread=1, differential=True, save=True):
         return table, table2
     
     return table
-
-
-import time
-then = time.time()
-
-time.sleep(2)
-now = time.time()
-print(now- then)
