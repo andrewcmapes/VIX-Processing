@@ -22,6 +22,12 @@ def Anderson_Darling(data):
             print(f"At {sig_level}% significance level: Fail to reject normality (likely Gaussian)")
 
 
+
+
+# In progress, want to test daily % changes for gaussian behavior
+
+
+
 spread_data, diff_data = load()
 data = spread_data[0]
 percentage_changes = []
@@ -29,7 +35,8 @@ for i in range(len(data.iloc[0,:])):
     per_diffs = []
     for j in range(len(data.iloc[:,0])):
         value = (data.iloc[j+1,i]-data.iloc[j,i])/data.iloc[j,i]
-        per_diffs.append()
+        per_diffs.append(value)
+        pass
 
 
 

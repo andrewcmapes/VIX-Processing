@@ -94,4 +94,5 @@ x.plot(title=f"Histogram of profits n=50\n The total profits from spreads tradin
 
 ax = x.plot(title=f'Profits line graph\n with mean profit of ${round(x['Profits'].mean())}')
 ax.axhline(y=x['Profits'].mean(), color='red', label='Mean')
+plt.legend()
 plt.show()
