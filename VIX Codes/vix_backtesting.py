@@ -35,244 +35,49 @@ def load():
     data_diffs.append(pd.read_csv(file_diff3))
     return data_spreads, data_diffs
 
-def buy(contract, limit, quantity, start=154):
+# Transaction Functions
+def buy(contract, limit, start=154):
     fee = 4.76
     buy_prices = contract.iloc[0:start][::-1]
     for i in range(start):
         if buy_prices.iloc[i] < limit:
-            return (1000*buy_prices.iloc[i]+fee)*quantity
+            return (1000*buy_prices.iloc[i]+fee)
     return False
 
-
-def sale(contract, limit, quantity, start=20):
+def sell(contract, limit, start=20):
     fee = 4.76
     sale_prices = contract.iloc[0:start][::-1]
     for i in range(start):
         if sale_prices.iloc[i] > limit:
-            return (1000*sale_prices.iloc[i]-fee)*quantity
-    return (1000*sale_prices.iloc[0]-fee)*quantity
+            return (1000*sale_prices.iloc[i]-fee)
+    return (1000*sale_prices.iloc[0]-fee)
 
+def profit(contract, buy_limit, sell_limit):
+    cost = buy(contract, buy_limit)
+    proceeds = sell(contract, sell_limit)
+    return proceeds-cost
 
-def strategy(data, buy_cutoff=.3, buy_month=5, spread=.75, quantity=8):
-    """
-    strategy backtests different buying and selling strategies for future spreads. The data used
-    goes back to August 2013 as seen from the merged data from which spreads are generated. It works
-    by identifying criteria for purchase, criteria for sale, and calculates all proceeds from the 
-    transactions after subtracting the trading fees.
-
-    Parameters
-    ----------
-    data : TYPE DataFrame
-        DESCRIPTION. Should be the spread data from either 1, 2, or 3 month spreads.
-    buy_cutoff : TYPE, float
-        DESCRIPTION. The cutoff price at which positions are either taken or not. The default is .3.
-    buy_month : TYPE, int
-        DESCRIPTION. The time from expiration at which purchase is made measured in months. The default is 5.
-    spread : TYPE, float
-        DESCRIPTION. The spread between the buy and sell price for early sale. The default is .75.
-    quantity : TYPE, int
-        DESCRIPTION. The number of contracts held in each position. The default is 8.
-
-    Returns
-    -------
-    gains : TYPE list
-        DESCRIPTION. gains gives the list of all payoffs from profitable trades.
-    losses : TYPE list
-        DESCRIPTION. losses gives the list of all payoffs from non-profitable trades. 
-
-    """
-    fees = 9.52 # cost of buying and selling a single future spread
-    multiplier = 1000 # Value multiplier from spread price
-    gains = []
-    losses = []
-    for i in range(0, len(data.iloc[0,:])):
-        col = data.iloc[:,i] # col represents the spread being evaluated
-        buy = col[buy_month*21] # specifying the buy price paid
-        if buy < buy_cutoff: # determines if the contract is purchased or not
-            sell = buy + spread # determines the specific sell point for early transaction
-            if max(col[0:buy_month*21]) > sell:
-                gains.append((spread * multiplier - fees) * quantity)
-            else: # handles if the specific sale price is not reached and contract is held to maturity
-                if (col[0]-buy)>0:
-                    gains.append(((col[0] - buy) * multiplier - fees) * quantity)
-                else:
-                    losses.append(((col[0] - buy) * multiplier - fees) * quantity)
-    return gains, losses
-
-
-def spread_comparison(data, buy_cutoff=.3, buy_month=5, spreads: list=[.75]):
-    """
-    spread_comparison is designed to aid in evaluating the effectiveness of different sell points
-    determined by the buy price and the spread. The spread value determines how much the value needs
-    to increase from the buy point for the contract to be sold early. 
-
-    Parameters
-    ----------
-    data : TYPE DataFrame
-        DESCRIPTION. 
-    buy_cutoff : float, optional
-        DESCRIPTION. The default cutoff that will be uniformly used with all spreads. The default is .3.
-    buy_month : int, optional
-        DESCRIPTION. The default timeframe used for contract purchase. The default is 5.
-    spreads : list, optional
-        DESCRIPTION. The spreads should be a list of different spread values to be compared. The default 
-        is [.75].
-
-    Returns
-    -------
-    profits : float
-        DESCRIPTION. The profits value represents the gains minus the losses thus giving the total proceeds.
-    gains : float
-        DESCRIPTION. The gains from all successful trades aggregated together.
-    losses : float
-        DESCRIPTION. The losses from all the unsuccessful trades aggregated together. 
-
-    """
-    gains = []
-    losses = []
+# Strategy Functions
+def spread_sale_price(data, spread=.75, buy_limit=.3):
     profits = []
-    for spread in spreads:
-        gain, loss = strategy(data = data, buy_month=buy_month, spread=spread, buy_cutoff=buy_cutoff)
-        gains.append(sum(gain))
-        losses.append(sum(loss))
-        profits.append(sum(gain+loss))
-    return profits, gains, losses
-
-
-def buy_cutoff_comparison(data, buy_cutoffs: list=[.3], buy_month=5, spread=.75):
-    """
-    The buy_cutoff_comparison function is used to compare different buy point cutoffs to identify efficient
-    values in comparing profit vs exposure.
-
-    Parameters
-    ----------
-    data : TYPE DataFrame
-        DESCRIPTION. 
-    buy_cutoff : list, optional
-        DESCRIPTION. The list of cutoff values that will be compared. The default is [.3].
-    buy_month : int, optional
-        DESCRIPTION. The default timeframe used for contract purchase. The default is 5.
-    spreads : float, optional
-        DESCRIPTION. The default spread that will be uniformly used with all buy point cutoffs. The default 
-        is .75.
-
-    Returns
-    -------
-    profits : float
-        DESCRIPTION. The profits value represents the gains minus the losses thus giving the total proceeds.
-    gains : float
-        DESCRIPTION. The gains from all successful trades aggregated together.
-    losses : float
-        DESCRIPTION. The losses from all the unsuccessful trades aggregated together. 
-
-    """
-    gains = []
-    losses = []
-    profits = []
-    for buy_cutoff in buy_cutoffs:
-        gain, loss = strategy(data = data, buy_cutoff = buy_cutoff, buy_month = buy_month, spread = spread)
-        gains.append(sum(gain))
-        losses.append(sum(loss))
-        profits.append(sum(gain+loss))
-    return profits, gains, losses
-
-
-def buy_month_comparison(data, buy_cutoff=.3, buy_months: list=[5], spread=.75):
-    """
-    The buy_month_comparison function is used to compare different purchase periods to identify efficient
-    practices in comparing profit vs exposure.
-
-    Parameters
-    ----------
-    data : TYPE DataFrame
-        DESCRIPTION. 
-    buy_cutoff : float, optional
-        DESCRIPTION. The default buy point cutoff used for contract purchase. The default is .3.
-    buy_month : list, optional
-        DESCRIPTION. The list of timeframes used for comparison of purchase periods. The default is [5].
-    spreads : float, optional
-        DESCRIPTION. The default spread that will be uniformly used with all buy point cutoffs. The default 
-        is .75.
-
-    Returns
-    -------
-    profits : float
-        DESCRIPTION. The profits value represents the gains minus the losses thus giving the total proceeds.
-    gains : float
-        DESCRIPTION. The gains from all successful trades aggregated together.
-    losses : float
-        DESCRIPTION. The losses from all the unsuccessful trades aggregated together. 
-
-    """
-    gains = []
-    losses = []
-    profits = []
-    for buy_month in buy_months:
-        gain, loss = strategy(data = data, buy_cutoff = buy_cutoff, buy_month = buy_month, spread = spread)
-        gains.append(sum(gain))
-        losses.append(sum(loss))
-        profits.append(sum(gain+loss))
-    return profits, gains, losses
-
-
-def comparison_grapher(data, entries: list, comparable: str='spreads', spread=.75, buy_cutoff=.3, buy_month=5) -> None:
-    """
-    The comparison_grapher function is used to produce graphs of the comparisons of buy_points, spreads, or purchase months.
-    It calls on the specific functions for comparison defined above. Then using the results produces plots to better visualize
-    this information. 
-
-    Parameters
-    ----------
-    data : TYPE
-        DESCRIPTION.
-    entries : list
-        DESCRIPTION. The list of values for the input being compared.
-    comparable : str, optional
-        DESCRIPTION. The value of comparable determines which input element we are comparing. Values used are 'spreads', 'months',
-        and 'buys'. The default is 'spreads'.
-    spread : float, optional
-        DESCRIPTION. The default is .75.
-    buy_cutoff : float, optional
-        DESCRIPTION. The default is .3.
-    buy_month : int, optional
-        DESCRIPTION. The default is 5.
-
-    Returns
-    -------
-    None
-        DESCRIPTION. Only plots are provided by this function.
-
-    """
-    fig1, ax1 = plt.subplots()
-    ax2 = ax1.twinx() # provides right side axis for losses
-    ax1.yaxis.set_major_formatter(ff(dollar_format)) # provides formatting for the 2 y axes
-    ax2.yaxis.set_major_formatter(ff(dollar_format))
-    if comparable == 'spreads':
-        p, g, l = spread_comparison(data=data, spreads=entries, buy_cutoff=buy_cutoff ,buy_month=buy_month)
-        plt.title('Spreads comparison')
-    elif comparable == 'months':
-        p, g, l = buy_month_comparison(data=data, buy_months=entries, buy_cutoff=buy_cutoff, spread=spread)
-        plt.title('months comparison')
-    elif comparable == 'buys':
-        p, g, l = buy_cutoff_comparison(data=data, buy_cutoffs=entries, buy_month=buy_month, spread=spread)
-        plt.title('buy cutoff comparison')
-    
-    
-    ax1.plot(entries, p, color='green', label='Profits')
-    ax1.plot(entries, g, color='blue', label='Gains')
-    ax2.plot(entries, l, color='red', label='Losses')
-    ax1.legend(bbox_to_anchor=(1, .5))
-    ax2.legend(bbox_to_anchor=(1, .60))
-    plt.show()
-
-
-def variable_sale_price(data, percent_price = .8, buy_cutoff=.3, quantity=8):
-    proceeds = []
     for i in range(len(data.iloc[0,:])-1):
-        cost = buy(data.iloc[:,i+1], buy_cutoff, quantity)
-        sale_price = sale(data.iloc[:,i+1], percent_price*max(data.iloc[0:5,i]), quantity)
-        proceeds.append(sale_price-cost)
-    return pd.DataFrame(proceeds)
+        contract = data.iloc[:,i+1]
+        cost = buy(contract, buy_limit)
+        proceeds = sell(contract, cost+spread)
+        profits.append(proceeds-cost)
+    return pd.DataFrame(profits)
+
+def dynamic_sale_price(data, percent_prior=.8, buy_limit=.3):
+    profits = []
+    for i in range(len(data.iloc[0,:])-1):
+        contract = data.iloc[:,i+1]
+        target_price = percent_prior*max(data.iloc[0:5,i]) # Calculates percentage of highest value the previous spread reached in last 5 days before expiration
+        profits.append(profit(contract, buy_limit, target_price))
+    return pd.DataFrame(profits)
+
+
+
+
 
 
 # # # # #
@@ -283,17 +88,6 @@ def variable_sale_price(data, percent_price = .8, buy_cutoff=.3, quantity=8):
 
 spread_data, diff_data = load()
 
-x = variable_sale_price(spread_data[0], .7)
+x = dynamic_sale_price(spread_data[0])
 x.plot()
 x.sum()
-
-
-
-# buy_months = [i for i in range(2, 6)]
-# comparison_grapher(data=spread_data[0], entries=buy_months, comparable='months')
-
-# spreads = [i/100 for i in range(110,250)]
-# comparison_grapher(data=spread_data[0], entries=spreads, comparable='spreads')
-
-# buy_cutoffs = [i/100 for i in range(60)]
-# comparison_grapher(data=spread_data[0], entries=buy_cutoffs, comparable='buys')
