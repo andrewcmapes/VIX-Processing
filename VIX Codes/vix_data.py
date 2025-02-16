@@ -15,7 +15,7 @@ number_code = dict(zip(range(1, 13), codes))
 
 
 
-def retriever(month: int, year: int, folder_out=r"C:\\Users\\andre\\spyder-env\\Projects\\VIX\\VIX Individual Data") -> None:
+def retriever(month: int, year: int, folder_out=r"C:\Users\andre\VS Code\Projects\VIX\VIX Individual Data") -> None:
     """
     retriever function communicates with the CBOE database to gather specific 
     VIX futures contracts data. The function extracts the daily high pricing
@@ -66,16 +66,16 @@ def retriever(month: int, year: int, folder_out=r"C:\\Users\\andre\\spyder-env\\
     
         except Exception as e:
             print(f"Error fetching data for {output_file}: {e}")         
-            
-            
+
+
 def merger() -> None:
     """
     merger function compiles individual VIX Futures contract data and matches their
     dates to generate a single merged .csv file with correct indexing.
 
     """
-    folder_in = r"C:\\Users\\andre\\spyder-env\\Projects\\VIX\\VIX Individual Data"
-    folder_out = r"C:\\Users\\andre\\spyder-env\\Projects\\VIX\\VIX Processed Data"
+    folder_in = r"C:\Users\andre\VS Code\Projects\VIX\VIX Individual Data"
+    folder_out = r"C:\Users\andre\VS Code\Projects\VIX\VIX Processed Data"
     output_file = 'Merged.csv'
     
     dataframes = []
@@ -155,8 +155,12 @@ def spreads(mo_spread=1, differential=True, save=True):
         # Data is reversed to create uniformness in respect to front contract
         # expiration for index value of 0. Length of data used is shortened for
         # greater month spreads.
-        spreads.append(spread[::-1].reset_index(drop=True)[:(22*(8-mo_spread))])
+        spreads.append(spread[::-1].reset_index(drop=True)[:(22*(7-mo_spread))])
     table = pd.concat(spreads,axis=1).reset_index(drop=True)[::-1]
+    
+    if table.isna().any().any() == True:
+        print("NaN values present in table")
+        return [],[]
     
     if save == True:
         output_file = f'{mo_spread} Month spreads.csv'
