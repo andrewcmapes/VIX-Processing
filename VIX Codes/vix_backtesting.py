@@ -36,43 +36,44 @@ def load():
     return data_spreads, data_diffs
 
 # Transaction Functions
-def buy(contract, limit, start=154):
+def buy(contract, limit, start=0):
     fee = 4.76
-    buy_prices = contract.iloc[0:start][::-1]
+    buy_prices = contract.iloc[start:]
     for i in range(start):
         if buy_prices.iloc[i] < limit:
             return (1000*buy_prices.iloc[i]+fee)
     return False
 
-def sell(contract, limit, start=20):
+def sell(contract, limit, start=133, sell_by=-5):
     fee = 4.76
-    sale_prices = contract.iloc[0:start][::-1]
-    for i in range(start):
-        if sale_prices.iloc[i] > limit:
-            return (1000*sale_prices.iloc[i]-fee)
-    return (1000*sale_prices.iloc[0]-fee)
+    sale_prices = contract.iloc[start:sell_by]
+    for price in sale_prices:
+        if price > limit:
+            return (1000*price-fee)
+    return len(sale_prices)
+    #return (1000*sale_prices.iloc[-1]-fee)
 
-def profit(contract, buy_limit, sell_limit):
+def profit(contract, buy_limit, sell_limit, sell_by):
     cost = buy(contract, buy_limit)
-    proceeds = sell(contract, sell_limit)
+    proceeds = sell(contract, sell_limit, sell_by)
     return proceeds-cost
 
 # Strategy Functions
-def spread_sale_price(data, spread=.75, buy_limit=.3):
+def spread_sale_price(data, spread=.75, buy_limit=.3, sell_by=-5):
     profits = []
     for i in range(len(data.iloc[0,:])-1):
         contract = data.iloc[:,i+1]
         cost = buy(contract, buy_limit)
-        proceeds = sell(contract, cost+spread)
+        proceeds = sell(contract, cost+spread, sell_by)
         profits.append(proceeds-cost)
     return pd.DataFrame(profits)
 
-def dynamic_sale_price(data, percent_prior=.8, buy_limit=.3):
+def dynamic_sale_price(data, percent_prior=.8, buy_limit=.3, sell_by=-5):
     profits = []
     for i in range(len(data.iloc[0,:])-1):
         contract = data.iloc[:,i+1]
         target_price = percent_prior*max(data.iloc[0:5,i]) # Calculates percentage of highest value the previous spread reached in last 5 days before expiration
-        profits.append(profit(contract, buy_limit, target_price))
+        profits.append(profit(contract, buy_limit, target_price, sell_by))
     return pd.DataFrame(profits)
 
 
@@ -88,6 +89,6 @@ def dynamic_sale_price(data, percent_prior=.8, buy_limit=.3):
 
 spread_data, diff_data = load()
 
-x = dynamic_sale_price(spread_data[0])
+x = dynamic_sale_price(spread_data[0], sell_by=-5)
 x.plot()
 x.sum()

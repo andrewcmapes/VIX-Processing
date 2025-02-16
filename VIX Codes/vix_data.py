@@ -15,9 +15,9 @@ number_code = dict(zip(range(1, 13), codes))
 
 
 
-def Retriever(month: int, year: int, folder_out=r"C:\\Users\\andre\\spyder-env\\Projects\\VIX\\VIX Individual Data") -> None:
+def retriever(month: int, year: int, folder_out=r"C:\\Users\\andre\\spyder-env\\Projects\\VIX\\VIX Individual Data") -> None:
     """
-    Retriever function communicates with the CBOE database to gather specific 
+    retriever function communicates with the CBOE database to gather specific 
     VIX futures contracts data. The function extracts the daily high pricing
     and saves it as a .csv file.
 
@@ -68,9 +68,9 @@ def Retriever(month: int, year: int, folder_out=r"C:\\Users\\andre\\spyder-env\\
             print(f"Error fetching data for {output_file}: {e}")         
             
             
-def Merger() -> None:
+def merger() -> None:
     """
-    Merger function compiles individual VIX Futures contract data and matches their
+    merger function compiles individual VIX Futures contract data and matches their
     dates to generate a single merged .csv file with correct indexing.
 
     """
@@ -92,9 +92,9 @@ def Merger() -> None:
     print(f'Successfully saved {output_file}')
 
 
-def Update(full=False):
+def update(full=False):
     """
-    Update function is used to update the current folders of VIX Individual Data
+    update function is used to update the current folders of VIX Individual Data
     contracts. It calls on the retriever function and cycles through different 
     date ranges depending on its parameter.
 
@@ -107,22 +107,22 @@ def Update(full=False):
 
     """
     date = datetime.now().date()
-    if full == True: # Updating all VIX contracts from the start
+    if full == True: # updating all VIX contracts from the start
         years = range(2013, date.year+2)
         months = range(1, 13)
-    else: # Updates recent and new contract months
+    else: # updates recent and new contract months
         years = range(date.year, date.year+2)
         months = range(1, 13)
 
     for year in years:
         for month in months:
-            Retriever(month, year)
-    Merger() # Updates merged.csv file as well
+            retriever(month, year)
+    merger() # updates merged.csv file as well
 
 
-def Spreads(mo_spread=1, differential=True, save=True):
+def spreads(mo_spread=1, differential=True, save=True):
     """
-    Spreads function obtains the VIX spread data from the separate price data
+    spreads function obtains the VIX spread data from the separate price data
     of each months contracts. This obtains pricing information for volatility
     spread trading.
 
@@ -141,8 +141,8 @@ def Spreads(mo_spread=1, differential=True, save=True):
         DESCRIPTION. Returns table of spread and differential data for use.
 
     """
-    folder_in = r"C:\\Users\\andre\\spyder-env\\Projects\\VIX\\VIX Processed Data"
-    folder_out = r"C:\\Users\\andre\\spyder-env\\Projects\\VIX\\VIX Processed Data"
+    folder_in = r"C:\Users\andre\VS Code\Projects\VIX\VIX Processed Data"
+    folder_out = r"C:\Users\andre\VS Code\Projects\VIX\VIX Processed Data"
     input_file = 'Merged.csv'
     data = pd.read_csv(os.path.join(folder_in, input_file))
 
@@ -156,10 +156,10 @@ def Spreads(mo_spread=1, differential=True, save=True):
         # expiration for index value of 0. Length of data used is shortened for
         # greater month spreads.
         spreads.append(spread[::-1].reset_index(drop=True)[:(22*(8-mo_spread))])
-    table = pd.concat(spreads,axis=1).reset_index(drop=True)
+    table = pd.concat(spreads,axis=1).reset_index(drop=True)[::-1]
     
     if save == True:
-        output_file = f'{mo_spread} Month Spreads.csv'
+        output_file = f'{mo_spread} Month spreads.csv'
         table.to_csv(os.path.join(folder_out, output_file), index=False)
         print(f'Successfully saved {output_file}')
     
@@ -170,7 +170,7 @@ def Spreads(mo_spread=1, differential=True, save=True):
         for i in range(len(table.iloc[:,0])-1):
             differential = table.iloc[i,:] - table.iloc[i+1,:]
             differentials.append(differential)
-        table2 = pd.DataFrame(differentials).round(2) # Eliminating machine error in values
+        table2 = pd.DataFrame(differentials).round(2)[::-1] # Eliminating machine error in values
         output_file = f'{mo_spread} Month Differentials.csv'
         table2.to_csv(os.path.join(folder_out, output_file), index=False)
         print(f'Successfully saved {output_file}')
