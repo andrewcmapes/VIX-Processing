@@ -35,6 +35,23 @@ def load():
     data_diffs.append(pd.read_csv(file_diff3))
     return data_spreads, data_diffs
 
+def buy(contract, limit, quantity, start=154):
+    fee = 4.76
+    buy_prices = contract.iloc[0:start][::-1]
+    for i in range(start):
+        if buy_prices.iloc[i] < limit:
+            return (1000*buy_prices.iloc[i]+fee)*quantity
+    return False
+
+
+def sale(contract, limit, quantity, start=20):
+    fee = 4.76
+    sale_prices = contract.iloc[0:start][::-1]
+    for i in range(start):
+        if sale_prices.iloc[i] > limit:
+            return (1000*sale_prices.iloc[i]-fee)*quantity
+    return (1000*sale_prices.iloc[0]-fee)*quantity
+
 
 def strategy(data, buy_cutoff=.3, buy_month=5, spread=.75, quantity=8):
     """
@@ -249,9 +266,13 @@ def comparison_grapher(data, entries: list, comparable: str='spreads', spread=.7
     plt.show()
 
 
-def variable_sale_price(data, percent_price = 80, buy_cutoff=.3, buy_month=5, quantity=8):
-    pass
-
+def variable_sale_price(data, percent_price = .8, buy_cutoff=.3, quantity=8):
+    proceeds = []
+    for i in range(len(data.iloc[0,:])-1):
+        cost = buy(data.iloc[:,i+1], buy_cutoff, quantity)
+        sale_price = sale(data.iloc[:,i+1], percent_price*max(data.iloc[0:5,i]), quantity)
+        proceeds.append(sale_price-cost)
+    return pd.DataFrame(proceeds)
 
 
 # # # # #
@@ -262,11 +283,17 @@ def variable_sale_price(data, percent_price = 80, buy_cutoff=.3, buy_month=5, qu
 
 spread_data, diff_data = load()
 
-buy_months = [i for i in range(2, 6)]
-comparison_grapher(data=spread_data[0], entries=buy_months, comparable='months')
+x = variable_sale_price(spread_data[0], .7)
+x.plot()
+x.sum()
 
-spreads = [i/100 for i in range(110,250)]
-comparison_grapher(data=spread_data[0], entries=spreads, comparable='spreads')
 
-buy_cutoffs = [i/100 for i in range(60)]
-comparison_grapher(data=spread_data[0], entries=buy_cutoffs, comparable='buys')
+
+# buy_months = [i for i in range(2, 6)]
+# comparison_grapher(data=spread_data[0], entries=buy_months, comparable='months')
+
+# spreads = [i/100 for i in range(110,250)]
+# comparison_grapher(data=spread_data[0], entries=spreads, comparable='spreads')
+
+# buy_cutoffs = [i/100 for i in range(60)]
+# comparison_grapher(data=spread_data[0], entries=buy_cutoffs, comparable='buys')
