@@ -1,6 +1,11 @@
 import numpy as np
 from vix_backtesting import load
 import scipy.stats as sps
+import pandas as pd
+from statsmodels.tsa.stattools import kpss
+
+spread_data, diff_data = load()
+data = spread_data[0]
 
 # # # # #
 # Goal: Testing for Gaussianity
@@ -21,25 +26,72 @@ def Anderson_Darling(data):
         else:
             print(f"At {sig_level}% significance level: Fail to reject normality (likely Gaussian)")
 
+def percentage_changes(data):
+    percentage_changes = []
+    for i in range(len(data.iloc[0,:])):
+        per_diffs = []
+        for j in range(len(data.iloc[:,0])-1):
+            value = (data.iloc[j+1,i]-data.iloc[j,i])/abs(data.iloc[j,i])
+            per_diffs.append(value)
+        percentage_changes.append(per_diffs)
+    percentage_changes = pd.DataFrame(percentage_changes).fillna(0)
+    percentage_changes.replace([np.inf, -np.inf], 0, inplace=True)
+    return percentage_changes.T
+
+def gaussianity_checker(data, check='rows'):
+    if check=='rows':
+        for i in range(len(percentage_changes.iloc[:,0])):
+            Anderson_Darling(percentage_changes.iloc[i,:])
+    if check=='columns':
+        for i in range(len(percentage_changes.iloc[0,:])):
+            Anderson_Darling(percentage_changes.iloc[:,i])
 
 
 
-# In progress, want to test daily % changes for gaussian behavior
+# # # # #
+# Testing Stationarity in percentage changes
+#
+#
+#
+def stationarity_checker(data, check='rows'):
+    if check=='rows':
+        for i in range(len(data.iloc[:,0])):
+            kpss(data.iloc[i,:])
+    if check=='columns':
+        for i in range(len(data.iloc[0,:])):
+            kpss(data.iloc[:,i])
+
+
+per_data = percentage_changes(data)
 
 
 
-spread_data, diff_data = load()
-data = spread_data[0]
-percentage_changes = []
-for i in range(len(data.iloc[0,:])):
-    per_diffs = []
-    for j in range(len(data.iloc[:,0])):
-        value = (data.iloc[j+1,i]-data.iloc[j,i])/data.iloc[j,i]
-        per_diffs.append(value)
-        pass
+# # # # #
+# Attempt modeling via ARIMA
+#
+#
+#
 
 
 
-for i in range(len(data.iloc[:,0])):
-    Anderson_Darling(data.iloc[i,:])
+
+
+# # # # #
+# attempt modeling via GARCH
+#
+#
+#
+
+
+
+
+
+# # # # #
+# attempt modeling via PCA
+#
+#
+#
+
+
+
 
